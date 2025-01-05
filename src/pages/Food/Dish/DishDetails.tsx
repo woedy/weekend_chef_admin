@@ -85,7 +85,7 @@ const DishDetails = () => {
                       : item.image
                   }
                   alt={item.title}
-                  className="w-100 h-100 rounded-lg shadow-lg"
+                  className="w-100 h-100 rounded-lg shadow-lg object-cover"
                 />
               </div>
 

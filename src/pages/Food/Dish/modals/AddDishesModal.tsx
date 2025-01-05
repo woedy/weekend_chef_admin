@@ -8,8 +8,10 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
   const [description, setDescription] = useState('');
   const [basePrice, setBasePrice] = useState('');
   const [photo, setPhoto] = useState(null);
+  const [value, setValue] = useState('');
+  const [quantity, setQuantity] = useState('');
   const [inputErrors, setInputErrors] = useState({});
-  const [serverError, setServerError] = useState('');
+  const [serverError, setServerError] = useState({});
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ message: '', type: '' });
   const [selectedCategory, setSelectedCategory] = useState(''); // Store the selected category id
@@ -24,7 +26,7 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
     e.preventDefault();
 
     setInputErrors({});
-    setServerError('');
+    setServerError({});
 
     let formValid = true;
     const errors = {};
@@ -43,6 +45,14 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
     if (basePrice === '') {
       formValid = false;
       errors.basePrice = 'Base price is required.';
+    }
+    if (value === '') {
+      formValid = false;
+      errors.value = 'Value is required.';
+    }
+    if (quantity === '') {
+      formValid = false;
+      errors.quantity = 'Quantity is required.';
     }
 
     if (selectedCategory === '') {
@@ -65,8 +75,10 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
     formData.append('name', name);
     formData.append('description', description);
     formData.append('base_price', basePrice);
-    formData.append('category', selectedCategory);
-    formData.append('photo', photo);
+    formData.append('category_id', selectedCategory);
+    formData.append('value', value);
+    formData.append('quantity', quantity);
+    formData.append('cover_photo', photo);
 
     const url = baseUrl + 'api/food/add-dish/';
 
@@ -88,6 +100,7 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
       const data = await response.json();
 
       if (!response.ok) {
+        setServerError(data);
         throw new Error(data.message || 'Failed to add dish');
       }
 
@@ -99,18 +112,27 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
       setName('');
       setDescription('');
       setBasePrice('');
+      setValue('');
+      setQuantity('');
       setPhoto(null);
 
       setAlert({ message: 'Item added successfully', type: 'success' });
     } catch (error) {
-      setAlert({
-        message: 'An error occurred while adding the item',
-        type: 'error',
-      });
-      console.error('Error adding dish:', error.message);
-      setServerError(
-        error.message || 'An unexpected error occurred. Please try again.',
-      );
+      // Check if error response contains validation errors
+      if (error?.response?.errors) {
+        // Update the form's input errors state with server-side validation errors
+        setInputErrors(error.response.errors);
+      } else {
+        // For any other type of error (network issues, unexpected errors, etc.)
+        setAlert({
+          message: 'An error occurred while adding the item',
+          type: 'error',
+        });
+        console.error('Error adding dish:', error);
+    
+    
+      }
+    
     } finally {
       setLoading(false);
     }
@@ -132,11 +154,23 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
 
   return (
     isOpen && (
-      <div className="fixed inset-0 flex items-center justify-end z-999 bg-black bg-opacity-50">
-        <div className="bg-white rounded-lg p-6 shadow-lg max-w-3xl w-full h-full flex justify-center">
-          <div className="w-full max-w-3xl">
+      <div
+        className={`fixed inset-0 flex items-center justify-end z-999 bg-black bg-opacity-50 transition-opacity duration-300 ease-in ${
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div
+          className={`bg-white rounded-lg p-6 shadow-lg max-w-3xl w-full h-full flex justify-center overflow-auto transition-all duration-500 ease-in-out transform ${
+            isOpen
+              ? "scale-100 translate-y-0"
+              : "scale-95 translate-y-4 opacity-0"
+          }`}
+        >
+          <div className="w-full max-w-3xl h-full flex flex-col">
             <h1 className="text-xl font-semibold mb-3">Add Dish</h1>
-
+  
+                 {/* Scrollable container */}
+                 <div className="overflow-y-auto h-full flex-1">
             <form onSubmit={handleSubmit} className="w-full max-w-3xl">
               {/* Name */}
               <div className="mb-5.5">
@@ -158,15 +192,10 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                   placeholder="Soups"
                 />
                 {inputErrors.name && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {inputErrors.name}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{inputErrors.name}</p>
                 )}
               </div>
-
-
-
-
+    
               {/* Description */}
               <div className="mb-5.5">
                 <label
@@ -187,23 +216,65 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                   placeholder="Dish description"
                 ></textarea>
                 {inputErrors.description && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {inputErrors.description}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{inputErrors.description}</p>
                 )}
               </div>
-
-
-
-
-
-       {/* Base price */}
-       <div className="mb-5.5">
+    
+              {/* Value */}
+              <div className="mb-5.5">
                 <label
                   className="mb-3 block text-sm font-medium text-black dark:text-white"
-                  htmlFor="name"
+                  htmlFor="value"
                 >
-                  Base price
+                  Value
+                </label>
+                <input
+                  className={`w-full rounded border ${
+                    inputErrors.value ? 'border-red-500' : 'border-stroke'
+                  } bg-gray py-3 pl-5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary`}
+                  id="value"
+                  name="value"
+                  type="text"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  placeholder="34 kg"
+                />
+                {inputErrors.value && (
+                  <p className="text-red-500 text-sm mt-1">{inputErrors.value}</p>
+                )}
+              </div>
+    
+              {/* Quantity */}
+              <div className="mb-5.5">
+                <label
+                  className="mb-3 block text-sm font-medium text-black dark:text-white"
+                  htmlFor="quantity"
+                >
+                  Quantity
+                </label>
+                <input
+                  className={`w-full rounded border ${
+                    inputErrors.quantity ? 'border-red-500' : 'border-stroke'
+                  } bg-gray py-3 pl-5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary`}
+                  id="quantity"
+                  name="quantity"
+                  type="text"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder="2"
+                />
+                {inputErrors.quantity && (
+                  <p className="text-red-500 text-sm mt-1">{inputErrors.quantity}</p>
+                )}
+              </div>
+    
+              {/* Base price */}
+              <div className="mb-5.5">
+                <label
+                  className="mb-3 block text-sm font-medium text-black dark:text-white"
+                  htmlFor="baseprice"
+                >
+                  Base price (Ghc)
                 </label>
                 <input
                   className={`w-full rounded border ${
@@ -217,102 +288,49 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                   placeholder="20"
                 />
                 {inputErrors.basePrice && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {inputErrors.basePrice}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{inputErrors.basePrice}</p>
                 )}
               </div>
-
+    
+              {/* Category */}
               <div className="flex flex-col gap-5 mb-7">
-        {loading ? (
-          <div>Loading...</div>
-        ) : (
-         
-            <div className="relative z-20 bg-white dark:bg-form-input">
-              {/* Left Icon */}
-           
-              <span class="absolute top-1/2 left-4 z-30 -translate-y-1/2">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g opacity="0.8">
-                      <path
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
-                        d="M10.0007 2.50065C5.85852 2.50065 2.50065 5.85852 2.50065 10.0007C2.50065 14.1428 5.85852 17.5007 10.0007 17.5007C14.1428 17.5007 17.5007 14.1428 17.5007 10.0007C17.5007 5.85852 14.1428 2.50065 10.0007 2.50065ZM0.833984 10.0007C0.833984 4.93804 4.93804 0.833984 10.0007 0.833984C15.0633 0.833984 19.1673 4.93804 19.1673 10.0007C19.1673 15.0633 15.0633 19.1673 10.0007 19.1673C4.93804 19.1673 0.833984 15.0633 0.833984 10.0007Z"
-                        fill="#637381"
-                      ></path>
-                      <path
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
-                        d="M0.833984 9.99935C0.833984 9.53911 1.20708 9.16602 1.66732 9.16602H18.334C18.7942 9.16602 19.1673 9.53911 19.1673 9.99935C19.1673 10.4596 18.7942 10.8327 18.334 10.8327H1.66732C1.20708 10.8327 0.833984 10.4596 0.833984 9.99935Z"
-                        fill="#637381"
-                      ></path>
-                      <path
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
-                        d="M7.50084 10.0008C7.55796 12.5632 8.4392 15.0301 10.0006 17.0418C11.5621 15.0301 12.4433 12.5632 12.5005 10.0008C12.4433 7.43845 11.5621 4.97153 10.0007 2.95982C8.4392 4.97153 7.55796 7.43845 7.50084 10.0008ZM10.0007 1.66749L9.38536 1.10547C7.16473 3.53658 5.90275 6.69153 5.83417 9.98346C5.83392 9.99503 5.83392 10.0066 5.83417 10.0182C5.90275 13.3101 7.16473 16.4651 9.38536 18.8962C9.54325 19.069 9.76655 19.1675 10.0007 19.1675C10.2348 19.1675 10.4581 19.069 10.6159 18.8962C12.8366 16.4651 14.0986 13.3101 14.1671 10.0182C14.1674 10.0066 14.1674 9.99503 14.1671 9.98346C14.0986 6.69153 12.8366 3.53658 10.6159 1.10547L10.0007 1.66749Z"
-                        fill="#637381"
-                      ></path>
-                    </g>
-                  </svg>
-                </span>
+                <label
+                  className="block text-sm font-medium text-black dark:text-white"
+                  htmlFor="category"
+                >
+                  Category
+                </label>
+                {loading ? (
+                  <div>Loading...</div>
+                ) : (
+                  <div className="relative z-20 bg-white dark:bg-form-input">
+                    {/* Select Dropdown */}
+                    <select
+                      id="category"
+                      name="category"
+                      value={selectedCategory}
+                      onChange={handleCategoryChange}
+                      className="relative z-20 w-full appearance-none rounded border border-gray-200 py-3 px-12 outline-none transition focus:border-primary active:border-primary dark:border-gray-500 dark:bg-form-input dark:text-white"
+                    >
+                      <option value="" disabled className="text-body dark:text-bodydark">
+                        Select a Category
+                      </option>
+                      {dishCategories.map((category) => (
+                        <option key={category.id} value={category.id} className="text-body dark:text-bodydark">
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  
+{inputErrors.category && (
+                  <p className="text-red-500 text-sm mt-1">{inputErrors.category}</p>
+                )}
+                  
+                  </div>
+                )}
 
-
-
-              {/* Select Dropdown */}
-              <select
-                id="category"
-                name="category"
-                value={selectedCategory}
-                onChange={handleCategoryChange}
-                className="relative z-20 w-full appearance-none rounded border border-gray-200 py-3 px-12 outline-none transition focus:border-primary active:border-primary dark:border-gray-500 dark:bg-form-input dark:text-white"
-              >
-                <option value="" disabled className="text-body dark:text-bodydark">
-                  Select a Category
-                </option>
-                {dishCategories.map((category) => (
-                  <option key={category.id} value={category.id} className="text-body dark:text-bodydark">
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              {/* Right Icon */}
-              <span className="absolute top-1/2 right-4 z-10 -translate-y-1/2">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g opacity="0.8">
-                      <path
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
-                        d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z"
-                        fill="#637381"
-                      ></path>
-                    </g>
-                  </svg>
-                </span>
-            </div>
-        
-        )}
-      </div>
-
-
-
-
-
-
-
-
-
+              </div>
+    
               {/* Photo Upload */}
               <div className="mb-5.5">
                 <label
@@ -332,11 +350,9 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                   onChange={handleImageChange}
                 />
                 {inputErrors.photo && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {inputErrors.photo}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{inputErrors.photo}</p>
                 )}
-
+    
                 {/* Image Preview */}
                 {imagePreview && (
                   <div className="mt-3">
@@ -348,10 +364,10 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                   </div>
                 )}
               </div>
-
+    
               {/* Server Error */}
-              {serverError && (
-                <div className="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-600 rounded-lg flex items-center space-x-2">
+              {serverError && serverError.errors && (
+                <div className="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-600 rounded-lg flex flex-col space-y-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="w-5 h-5 text-red-600"
@@ -366,10 +382,21 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                       d="M12 8v4m0 4h.01M5.303 5.303a9 9 0 1112.394 12.394 9 9 0 01-12.394-12.394z"
                     />
                   </svg>
-                  <p className="text-sm">{serverError}</p>
+    
+                  {/* Dynamically render errors */}
+                  {serverError.errors &&
+                    Object.keys(serverError.errors).map((field) => (
+                      <div key={field}>
+                        <p className="text-red-500 text-sm">
+                          {Array.isArray(serverError.errors[field])
+                            ? serverError.errors[field].join(', ') // Join array of error messages if any
+                            : serverError.errors[field]}
+                        </p>
+                      </div>
+                    ))}
                 </div>
               )}
-
+    
               {/* Buttons */}
               <div className="flex justify-end gap-4.5">
                 <button
@@ -379,7 +406,7 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                 >
                   Cancel
                 </button>
-
+    
                 {loading ? (
                   <div
                     role="status"
@@ -397,7 +424,7 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                         fill="currentColor"
                       />
                       <path
-                        d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                        d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0871 9.04874 41.5916 10.4971 44.0171 9.86006C47.3133 8.99412 50.7687 8.51414 54.2369 8.54135C59.2411 8.57677 64.1174 10.2351 68.5077 12.9588C72.6234 15.5377 76.2763 19.2303 79.2085 23.5668C82.7227 28.7998 85.2346 34.6957 87.5305 41.0168C88.1714 42.7039 91.2973 41.4942 93.9676 39.0409Z"
                         fill="currentFill"
                       />
                     </svg>
@@ -412,19 +439,17 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                   </button>
                 )}
               </div>
-
-              {/* Render the alert */}
-              <Alert2
-                message={alert.message}
-                type={alert.type}
-                onClose={closeAlert}
-              />
             </form>
+          </div>
+  
+          
           </div>
         </div>
       </div>
     )
   );
+  
+  
 };
 
 export default AddDishModal;
