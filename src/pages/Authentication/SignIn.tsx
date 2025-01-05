@@ -76,6 +76,7 @@ const SignIn: React.FC = () => {
         console.log('Login successful');
         console.log(responseData.data.token);
         navigate('/dashboard');
+        window.location.reload();
       } else if (response.status === 400) {
         setEmailError(
           responseData.errors.email ? responseData.errors.email[0] : '',

@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { baseUrl, baseUrlMedia, userToken } from '../../../constants';
+import { baseUrl, baseUrlMedia, truncateText, userToken } from '../../../constants';
 import Pagination from '../../../components/Pagination';
 import Alert2 from '../../UiElements/Alert2';
 import ArchiveConfirmationModal from '../../../components/ArchiveConfirmationModal';
 import DeleteConfirmationModal from '../../../components/DeleteConfirmationModal';
 import Breadcrumb from '../../../components/Breadcrumbs/Breadcrumb';
-import AddDishCategoryModal from './modals/AddDishCategoryModal';
+import AddDishModal from './modals/AddDishesModal';
 
-const AllDishCategories = () => {
+const AllDishes = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [categories, setCategories] = useState([]);
+  const [dishes, setDishes] = useState([]);
+  const [dishCategories, setDishCategories] = useState([]);
   const [totalPages, setTotalPages] = useState(1); // Default to 1 to avoid issues
   const [loading, setLoading] = useState(false);
 
@@ -27,6 +28,27 @@ const AllDishCategories = () => {
   const [alert, setAlert] = useState({ message: '', type: '' });
 
 
+    // State to track which categories are checked
+    const [checkedCategories, setCheckedCategories] = useState({});
+  
+    // Handle checkbox state changes
+    const handleCheckboxChange = (dishCategory) => {
+      setCheckedCategories((prevState) => ({
+        ...prevState,
+        [dishCategory.id]: !prevState[dishCategory.id],
+      }));
+
+    };
+  
+
+
+    const [priceValue, setPriceValue] = useState(50); // Initial value set to 50
+
+  const handleSliderChange = (event) => {
+    setPriceValue(event.target.value);
+  };
+
+
   const openAddItemModal = () => {
     setIsAddModalOpen(true);
   };
@@ -38,6 +60,38 @@ const AllDishCategories = () => {
 
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${baseUrl}api/food/get-all-dishes/?search=${encodeURIComponent(
+          search,
+        )}&page=${page}&categories=${JSON.stringify(checkedCategories)}&price=${priceValue}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Token ${userToken}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setDishes(data.data.dishes);
+      setTotalPages(data.data.pagination.total_pages);
+      console.log('Total Pages:', data.data.pagination.total_pages);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [baseUrl, search, page, userToken, checkedCategories, priceValue]);
+
+  
+  
+  const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(
@@ -57,25 +111,33 @@ const AllDishCategories = () => {
       }
 
       const data = await response.json();
-      setCategories(data.data.food_categories);
-      setTotalPages(data.data.pagination.total_pages);
-      console.log('Total Pages:', data.data.pagination.total_pages);
+      setDishCategories(data.data.food_categories);
+      //setTotalPages(data.data.pagination.total_pages);
+      //console.log('Total Pages:', data.data.pagination.total_pages);
+      console.log('Categories:', data.data.food_categories);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  }, [baseUrl, search, page, userToken]);
+  }, [baseUrl, search, page, userToken, checkedCategories, priceValue]);
 
+  
+  
+  
+  
+  
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    fetchCategories();
+    console.log('Checked Categories:', checkedCategories);
+  }, [fetchData, fetchCategories, search, page, checkedCategories, priceValue]);
 
   const handleDelete = async (itemId) => {
-    const data = { id: itemId };
+    const data = { dish_id: itemId };
 
     try {
-      const response = await fetch(`${baseUrl}api/food/delete-food-category/`, {
+      const response = await fetch(`${baseUrl}api/food/delete-dish/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,10 +168,10 @@ const AllDishCategories = () => {
 
   
   const handleArchive = async (itemId) => {
-    const data = { id: itemId };
+    const data = { dish_id: itemId };
 
     try {
-      const response = await fetch(`${baseUrl}api/food/archive-food-category/`, {
+      const response = await fetch(`${baseUrl}api/food/archive-dish/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -169,14 +231,14 @@ const AllDishCategories = () => {
 
 
     <div>
-        <Breadcrumb pageName="Dish Categories" />
+        <Breadcrumb pageName="Dish" />
 
 <div className='grid grid-cols-3 gap-2'>
       
       <div className="col-span-2 rounded-sm border border-stroke  shadow-default dark:border-strokedark dark:bg-boxdark">
         <div className="py-6 px-4 md:px-6 xl:px-7.5">
           <h4 className="text-xl font-semibold text-black dark:text-white">
-            All Dish Categories
+            All Dishes
           </h4>
         </div>
   
@@ -195,13 +257,13 @@ const AllDishCategories = () => {
   
             
             className="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90">
-              Add dish category
+              Add dish
             </button>
 
             <div></div>
 
                <div></div>
-                       <Link to={'/archived-dish-categories/'}>
+                       <Link to={'/archived-dishes/'}>
  
             <button 
                  
@@ -213,53 +275,89 @@ const AllDishCategories = () => {
         </div>
   
        {/* AddItemModal to display the Item form */}
-       <AddDishCategoryModal isOpen={isAddModalOpen} onClose={closeAddItemModal} fetchData={fetchData} />
+       <AddDishModal isOpen={isAddModalOpen} onClose={closeAddItemModal} fetchData={fetchData} dishCategories={dishCategories} />
   
        
         <div className="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-6 md:px-6 2xl:px-7.5">
-          <div className="col-span-2 flex items-center">
+    
+         
+          <div className="col-span-1 flex items-center">
             <p className="font-medium">Name</p>
           </div>
-          <div className="col-span-3 hidden items-center sm:flex mr-4">
+          <div className="col-span-1 hidden items-center mr-2 sm:flex mr-4">
+            <p className="font-medium">Category</p>
+          </div>
+     
+          <div className="col-span-1 hidden items-center sm:flex mr-4">
             <p className="font-medium">Description</p>
           </div>
      
-   
+          <div className="col-span-1 hidden items-center sm:flex mr-4">
+            <p className="font-medium">Base Price</p>
+          </div>
+     
+          <div className="col-span-1 hidden items-center sm:flex mr-4">
+            <p className="font-medium">Value</p>
+          </div>
+     
   
           <div className="col-span-1 flex items-center">
             <p className="font-medium">Actions</p>
           </div>
         </div>
   
-        {categories
-          ? categories.map((category) => (
+        {dishes
+          ? dishes.map((dish) => (
               <div
                 className="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-6 md:px-6 2xl:px-7.5 hover:bg-gray"
-                key={category.id}
+                key={dish.dish_id}
               >
-                <div className="col-span-2 flex items-center">
+
+
+
+                <div className="col-span-1 flex items-center">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                       <div className="h-12 w-12 overflow-hidden rounded-md">
                         <img
-                          src={`${baseUrlMedia}${category.photo}`}
-                          alt="Category"
+                          src={`${baseUrlMedia}${dish.cover_photo}`}
+                          alt="dish"
                           className="h-full w-full object-cover"
                         />
                       </div>
                     </div>
                     <p className="text-sm text-black dark:text-white">
-                      {`${category.name}`}
+                      {`${dish.name}`}
                     </p>
                   </div>
                 </div>
   
-                <div className="col-span-3 hidden items-center sm:flex mr-4">
+                <div className="col-span-1 hidden items-center mr-2 sm:flex mr-4">
                   <p className="text-sm text-black dark:text-white">
-                    {category.description}
+                    {dish.category_name}
                   </p>
                 </div>
   
+  
+                <div className="col-span-1 hidden items-center sm:flex mr-4">
+                  <p className="text-sm text-black dark:text-white">
+                    {truncateText(dish.description, 20)}
+                  </p>
+                </div>
+  
+
+                <div className="col-span-1 hidden items-center sm:flex mr-4">
+                  <p className="text-sm text-black dark:text-white">
+                    {dish.base_price}
+                  </p>
+                </div>
+
+
+                <div className="col-span-1 hidden items-center sm:flex mr-4">
+                  <p className="text-sm text-black dark:text-white">
+                    {dish.value}
+                  </p>
+                </div>
   
   
   
@@ -267,7 +365,7 @@ const AllDishCategories = () => {
                   <p className="text-sm text-black dark:text-white">
                     <div className="flex items-center space-x-3.5">
                       <button className="hover:text-primary">
-                        <Link to={'/category-details/' + category.id}>
+                        <Link to={'/dish-details/' + dish.dish_id}>
                           <svg
                             className="fill-current"
                             width="18"
@@ -288,7 +386,7 @@ const AllDishCategories = () => {
                         </Link>
                       </button>
                       <button 
-                         onClick={() => openArchiveModal(category.id)} 
+                         onClick={() => openArchiveModal(dish.dish_id)} 
                       
                       className="hover:text-primary">
                         <svg
@@ -312,7 +410,7 @@ const AllDishCategories = () => {
   
                       <button
                         className="hover:text-primary"
-                        onClick={() => openDeleteModal(category.id)} // Pass the ID of the item to be deleted
+                        onClick={() => openDeleteModal(dish.dish_id)} // Pass the ID of the item to be deleted
                       >
                         <svg
                           className="fill-current"
@@ -346,6 +444,10 @@ const AllDishCategories = () => {
               </div>
             ))
           : null}
+
+
+
+
         <Pagination
           pagination={{
             page_number: page,
@@ -378,12 +480,97 @@ const AllDishCategories = () => {
         />
    </div>
   
-  
+
+  <div>
+
+  <h1 className="font-semibold textlg mb-3">Filter</h1>
+
+
+  <div className="col-span-1 rounded-sm border border-stroke shadow-default dark:border-strokedark dark:bg-boxdark">
+      <div className="py-6 px-4 md:px-6 xl:px-7.5 border-b border-stroke dark:border-strokedark">
+        <h1 className="font-semibold text-lg">Categories</h1>
+      </div>
+
+      <div className="flex flex-col gap-5 p-6">
+      <div className="space-y-3">
+        {loading ? (
+          <div>Loading...</div>
+        ) : (
+          dishCategories.map((dishCategory) => (
+            <div key={dishCategory.id} className="flex items-center">
+              <label
+                htmlFor={dishCategory.id}
+                className="flex cursor-pointer select-none items-center space-x-1"
+              >
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    id={dishCategory.id}
+                    className="sr-only"
+                    checked={checkedCategories[dishCategory.id] || false}
+                    onChange={() => handleCheckboxChange(dishCategory)}
+                  />
+                  <div
+                    className={`mr-4 flex h-4 w-4 items-center justify-center rounded border-2 transition-all duration-300 ease-in-out ${
+                      checkedCategories[dishCategory.id]
+                        ? 'bg-primary border-primary'
+                        : 'bg-gray-200 border-gray-400'
+                    } hover:border-primary`}
+                  >
+                    {checkedCategories[dishCategory.id] && (
+                      <span className="h-2 w-2 rounded bg-white" />
+                    )}
+                  </div>
+                </div>
+                <span className="text-gray-700 dark:text-white text-lg">
+                  {dishCategory.name}
+                </span>
+              </label>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+    </div>
+
+
    <div className="col-span-1 rounded-sm border border-stroke  shadow-default dark:border-strokedark dark:bg-boxdark">
-      
-  
+      <div className="py-6 px-4 md:px-6 xl:px-7.5 border-b border-stroke dark:border-strokedark">
+        <h1 className="font-semibold textlg">Price</h1>
+        </div>
+
+        <div className="flex flex-col items-center space-y-4 p-6">
+      <label className=" font-medium" htmlFor="rangeSlider">
+        Price: {priceValue}
+      </label>
+      <input
+        type="range"
+        id="rangeSlider"
+        min="0"
+        max="100"
+        value={priceValue}
+        onChange={handleSliderChange}
+        className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+      <div className="w-full bg-gray-200 rounded-full h-1.5">
+        <div
+          className="bg-primary h-1.5 rounded-full"
+          style={{ width: `${priceValue}%` }}
+        ></div>
+      </div>
+    </div>
   
    </div>
+    
+
+
+
+  </div>
+  
+
+
+
+   
       </div>
   
 
@@ -396,4 +583,4 @@ const AllDishCategories = () => {
   );
 };
 
-export default AllDishCategories;
+export default AllDishes;

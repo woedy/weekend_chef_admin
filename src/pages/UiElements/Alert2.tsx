@@ -9,12 +9,12 @@ const Alert2 = ({ message, type, onClose }) => {
 
   switch (type) {
     case 'success':
-      alertClasses += ' bg-green-100 text-green-800';
+      alertClasses += ' bg-green text-white';
       iconClasses += ' text-green-500';
       textClasses = 'font-semibold';
       break;
     case 'error':
-      alertClasses += ' bg-red-100 text-red-800';
+      alertClasses += ' bg-primary text-white';
       iconClasses += ' text-red-500';
       textClasses = 'font-semibold';
       break;

@@ -1,16 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { baseUrl, baseUrlMedia, userToken } from '../../../constants';
+import { baseUrl, baseUrlMedia, userToken } from '../../../../constants';
+import Alert2 from '../../../UiElements/Alert2';
 
-const AddDishCategoryModal = ({ isOpen, onClose }) => {
+const AddDishCategoryModal = ({ isOpen, onClose, fetchData }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [photo, setPhoto] = useState(null);
     const [inputErrors, setInputErrors] = useState({});
     const [serverError, setServerError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [alert, setAlert] = useState({ message: '', type: '' });
 
     const navigate = useNavigate();
+
+
+    const closeAlert = () => {
+        setAlert({ message: '', type: '' });
+      };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -74,9 +82,19 @@ const AddDishCategoryModal = ({ isOpen, onClose }) => {
     
             // Close the modal and navigate to the All Dish Categories page
             onClose(); // Close the modal
-            navigate('/all-dish-categories', { replace: true }); // Navigate to the page
-            window.location.reload(); // Force page reload to reflect changes
+            fetchData();
+            setName('');
+            setDescription('');
+            setPhoto(null);
+            
+            setAlert({ message: 'Item added successfully', type: 'success' });
+
         } catch (error) {
+         
+            setAlert({
+                message: 'An error occurred while adding the item',
+                type: 'error',
+              });
             console.error('Error adding food category:', error.message);
             setServerError(error.message || 'An unexpected error occurred. Please try again.');
         } finally {
@@ -244,6 +262,10 @@ const AddDishCategoryModal = ({ isOpen, onClose }) => {
                                 </button>
                             )}
                         </div>
+
+                                {/* Render the alert */}
+        <Alert2 message={alert.message} type={alert.type} onClose={closeAlert} />
+     
                     </form>
                    </div>
              

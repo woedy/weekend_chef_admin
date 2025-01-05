@@ -20,7 +20,7 @@ module.exports = {
         transparent: 'transparent',
         white: '#FFFFFF',
         black: '#1C2434',
-        green: '#F94638',
+        green: '#31c400',
         yellow: '#FFFFFF',
         'black-2': '#010101',
         body: '#64748B',

@@ -18,6 +18,10 @@ import SignIn from './pages/Authentication/SignIn';
 
 
 import AllDishCategories from './pages/Food/DishCategories/AllDishCategories';
+import AllDishes from './pages/Food/Dish/AllDishes';
+import ArchivedDishCategories from './pages/Food/DishCategories/ArchivedDishCategories';
+import ArchivedDishes from './pages/Food/Dish/ArchivedDish';
+import DishDetails from './pages/Food/Dish/DishDetails';
 
 const hiddenOnRoutes = ['/', '/signup', '/signin'];
 
@@ -87,6 +91,51 @@ function App() {
             </>
           }
         />
+
+
+<Route
+          path="/archived-dish-categories"
+          element={
+            <>
+              <PageTitle title="Archived Dish Categories | Weekend Chef Admin." />
+              <ArchivedDishCategories />
+            </>
+          }
+        />
+
+
+
+        <Route
+          path="/all-dishes"
+          element={
+            <>
+              <PageTitle title="All Dishes | Weekend Chef Admin." />
+              <AllDishes />
+            </>
+          }
+        />
+
+        <Route
+          path="/dish-details/:dish_id"
+          element={
+            <>
+              <PageTitle title="Dish Details | Weekend Chef Admin." />
+              <DishDetails />
+            </>
+          }
+        />
+
+
+<Route
+          path="/archived-dishes"
+          element={
+            <>
+              <PageTitle title="Archived Dish | Weekend Chef Admin." />
+              <ArchivedDishes />
+            </>
+          }
+        />
+
 
 
                 <Route
