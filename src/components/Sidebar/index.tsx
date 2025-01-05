@@ -67,7 +67,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         <NavLink to="/dashboard">
           <div className="flex items-center gap-2">
             <img className="h-10" src={Logo} alt="Logo" />
-            <h4 className="mb-2 text-xl font-semibold text-white dark:text-black">
+            <h4 className="mb-2 text-xl font-semibold text-white dark:text-white">
               Weekend Chef Admin
             </h4>
           </div>
