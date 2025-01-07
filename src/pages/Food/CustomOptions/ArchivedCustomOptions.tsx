@@ -7,10 +7,10 @@ import ArchiveConfirmationModal from '../../../components/ArchiveConfirmationMod
 import Breadcrumb from '../../../components/Breadcrumbs/Breadcrumb';
 import UnArchiveConfirmationModal from '../../../components/UnArchiveConfirmationModal';
 
-const ArchivedDishes = () => {
+const ArchivedCustomOptions = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [dishes, setDishes] = useState([]);
+  const [customOptions, setCustomOptions] = useState([]);
   const [totalPages, setTotalPages] = useState(1); // Default to 1 to avoid issues
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +38,7 @@ const ArchivedDishes = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${baseUrl}api/food/get-all-archived-dish/?search=${encodeURIComponent(
+        `${baseUrl}api/orders/get-all-archived-custom-options/?search=${encodeURIComponent(
           search,
         )}&page=${page}`,
         {
@@ -54,9 +54,8 @@ const ArchivedDishes = () => {
       }
 
       const data = await response.json();
-      setDishes(data.data.dishes);
+      setCustomOptions(data.data.custom_options);
       setTotalPages(data.data.pagination.total_pages);
-      console.log('Total Pages:', data.data.pagination.total_pages);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -72,10 +71,10 @@ const ArchivedDishes = () => {
 
   
   const handleUnArchive = async (itemId) => {
-    const data = { dish_id: itemId };
+    const data = { custom_option_id: itemId };
 
     try {
-      const response = await fetch(`${baseUrl}api/food/unarchive-dish/`, {
+      const response = await fetch(`${baseUrl}api/orders/unarchive-custom-option/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,14 +123,14 @@ const ArchivedDishes = () => {
 
 
     <div>
-        <Breadcrumb pageName="Dish / Archives" />
+        <Breadcrumb pageName="Custom Options / Archives" />
 
 <div className='grid grid-cols-3 gap-2'>
       
       <div className="col-span-2 rounded-sm border border-stroke  shadow-default dark:border-strokedark dark:bg-boxdark">
         <div className="py-6 px-4 md:px-6 xl:px-7.5">
           <h4 className="text-xl font-semibold text-black dark:text-white">
-            Archived Dishes
+            Archived Custom Options
           </h4>
         </div>
   
@@ -158,7 +157,7 @@ const ArchivedDishes = () => {
             <p className="font-medium">Name</p>
           </div>
           <div className="col-span-1 hidden items-center mr-2 sm:flex mr-4">
-            <p className="font-medium">Dish</p>
+            <p className="font-medium">Option Type</p>
           </div>
      
           <div className="col-span-1 hidden items-center sm:flex mr-4">
@@ -181,11 +180,11 @@ const ArchivedDishes = () => {
           </div>
         </div>
   
-        {dishes
-          ? dishes.map((dish) => (
+        {customOptions
+          ? customOptions.map((customOption) => (
               <div
                 className="grid grid-cols-7 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-6 md:px-6 2xl:px-7.5 hover:bg-gray"
-                key={dish.dish_id}
+                key={customOption.custom_option_id}
               >
 
 
@@ -195,42 +194,42 @@ const ArchivedDishes = () => {
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                       <div className="h-12 w-12 overflow-hidden rounded-md">
                         <img
-                          src={`${baseUrlMedia}${dish.cover_photo}`}
-                          alt="dish"
+                          src={`${baseUrlMedia}${customOption.photo}`}
+                          alt="customOption"
                           className="h-full w-full object-cover"
                         />
                       </div>
                     </div>
                     <p className="text-sm text-black dark:text-white">
-                      {`${dish.name}`}
+                      {`${customOption.name}`}
                     </p>
                   </div>
                 </div>
   
                 <div className="col-span-1 hidden items-center mr-2 sm:flex mr-4">
                   <p className="text-sm text-black dark:text-white">
-                    {dish.category_name}
+                    {customOption.option_type}
                   </p>
                 </div>
   
   
                 <div className="col-span-1 hidden items-center sm:flex mr-4">
                   <p className="text-sm text-black dark:text-white">
-                      {truncateText(dish.description, 20)}
+                      {truncateText(customOption.description, 20)}
                   </p>
                 </div>
   
 
                 <div className="col-span-1 hidden items-center sm:flex mr-4">
                   <p className="text-sm text-black dark:text-white">
-                    {dish.base_price}
+                    {customOption.price}
                   </p>
                 </div>
 
 
                 <div className="col-span-1 hidden items-center sm:flex mr-4">
                   <p className="text-sm text-black dark:text-white">
-                    {dish.value}
+                    {customOption.value}
                   </p>
                 </div>
   
@@ -240,7 +239,7 @@ const ArchivedDishes = () => {
                   <p className="text-sm text-black dark:text-white">
                     <div className="flex items-center space-x-3.5">
                       <button className="hover:text-primary">
-                        <Link to={'/dish-details/' + dish.dish_id}>
+                        <Link to={'/custom-option-details/' + customOption.custom_option_id}>
                           <svg
                             className="fill-current"
                             width="18"
@@ -261,7 +260,7 @@ const ArchivedDishes = () => {
                         </Link>
                       </button>
                       <button 
-                         onClick={() => openArchiveModal(dish.dish_id)} 
+                         onClick={() => openArchiveModal(customOption.custom_option_id)} 
                       
                       className="hover:text-primary">
                         <svg
@@ -338,4 +337,4 @@ const ArchivedDishes = () => {
   );
 };
 
-export default ArchivedDishes;
+export default ArchivedCustomOptions;

@@ -15,13 +15,14 @@ import AddUser from './pages/Users/AddUser';
 import SignUp from './pages/Authentication/SignUp';
 import SignIn from './pages/Authentication/SignIn';
 
-
-
 import AllDishCategories from './pages/Food/DishCategories/AllDishCategories';
 import AllDishes from './pages/Food/Dish/AllDishes';
 import ArchivedDishCategories from './pages/Food/DishCategories/ArchivedDishCategories';
 import ArchivedDishes from './pages/Food/Dish/ArchivedDish';
 import DishDetails from './pages/Food/Dish/DishDetails';
+import AllCustomOptions from './pages/Food/CustomOptions/AllCustomOptions';
+import ArchivedCustomOptions from './pages/Food/CustomOptions/ArchivedCustomOptions';
+import CustomOptionDetails from './pages/Food/CustomOptions/CustomOptionDetails';
 
 const hiddenOnRoutes = ['/', '/signup', '/signin'];
 
@@ -92,8 +93,7 @@ function App() {
           }
         />
 
-
-<Route
+        <Route
           path="/archived-dish-categories"
           element={
             <>
@@ -102,8 +102,6 @@ function App() {
             </>
           }
         />
-
-
 
         <Route
           path="/all-dishes"
@@ -125,8 +123,7 @@ function App() {
           }
         />
 
-
-<Route
+        <Route
           path="/archived-dishes"
           element={
             <>
@@ -137,8 +134,42 @@ function App() {
         />
 
 
+<Route
+          path="/all-custom-options"
+          element={
+            <>
+              <PageTitle title="All Custom Options | Weekend Chef Admin." />
+              <AllCustomOptions />
+            </>
+          }
+        />
 
-                <Route
+
+
+<Route
+          path="/custom-option-details/:custom_option_id"
+          element={
+            <>
+              <PageTitle title="Custom Option Details | Weekend Chef Admin." />
+              <CustomOptionDetails />
+            </>
+          }
+        />
+
+
+
+
+<Route
+          path="/archived-custom-options"
+          element={
+            <>
+              <PageTitle title="Archived Custom Options | Weekend Chef Admin." />
+              <ArchivedCustomOptions />
+            </>
+          }
+        />
+
+        <Route
           path="/all-users"
           element={
             <>
@@ -147,7 +178,6 @@ function App() {
             </>
           }
         />
-
 
         <Route
           path="/user-details/:user_id"
@@ -168,12 +198,6 @@ function App() {
             </>
           }
         />
-
-
-
-
-
-
 
         <Route
           path="/ui/alerts"

@@ -2,23 +2,36 @@ import { useCallback, useEffect, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumbs/Breadcrumb';
 import { baseUrl, baseUrlMedia, userToken } from '../../../constants';
 import { useParams } from 'react-router-dom';
+import EditDishModal from './modals/EditDishesModal';
 
 const DishDetails = () => {
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+
   const [activeTab, setActiveTab] = useState(0);
   const { dish_id } = useParams();
 
   const [loading, setLoading] = useState(false);
   const [dishDetails, setDishDetails] = useState({});
   const [ingredients, setIngredients] = useState([]);
-  const [ customOptions, setCustomOption] = useState([]);
+  const [customOptions, setCustomOption] = useState([]);
   const [relatedFoods, setRelatedFoods] = useState([]);
   const [chefs, setChefs] = useState([]);
   const [galleryImages, setGalleryImages] = useState([]);
+  const [dishCategories, setDishCategories] = useState([]);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const tabs = [
     { label: 'Ingredient', content: <Ingredients ingredients={ingredients} /> },
-    { label: 'Custom Options', content: <CustomOptions options={customOptions} /> },
-    { label: 'Related foods', content: <RelatedFoods relatedFoods={relatedFoods} /> },
+    {
+      label: 'Custom Options',
+      content: <CustomOptions options={customOptions} />,
+    },
+    {
+      label: 'Related foods',
+      content: <RelatedFoods relatedFoods={relatedFoods} />,
+    },
     { label: 'Chefs', content: <Chefs chefs={chefs} /> },
     { label: 'Gallery', content: <Gallery galleryImages={galleryImages} /> },
   ];
@@ -30,6 +43,14 @@ const DishDetails = () => {
     price: 12.99,
     category: 'Main Course',
     image: 'https://via.placeholder.com/500', // Replace with your image link
+  };
+
+  const openEditItemModal = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditItemModal = () => {
+    setIsEditModalOpen(false);
   };
 
   const fetchData = useCallback(async () => {
@@ -64,9 +85,41 @@ const DishDetails = () => {
     }
   }, [baseUrl, dish_id, userToken]);
 
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${baseUrl}api/food/get-all-food-categories/?search=${encodeURIComponent(
+          search,
+        )}&page=${page}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Token ${userToken}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setDishCategories(data.data.food_categories);
+      //setTotalPages(data.data.pagination.total_pages);
+      //console.log('Total Pages:', data.data.pagination.total_pages);
+      console.log('Categories:', data.data.food_categories);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [baseUrl, userToken]);
+
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    fetchCategories();
+  }, [fetchData, fetchCategories]);
 
   return (
     <div>
@@ -112,7 +165,24 @@ const DishDetails = () => {
           </div>
         </div>
 
-        <div className="col-span-1 rounded-sm border border-stroke  shadow-default dark:border-strokedark dark:bg-boxdark"></div>
+        <div className="col-span-1 rounded-sm border border-stroke  shadow-default dark:border-strokedark dark:bg-boxdark">
+          <button
+            className="bg-primary m-5  h-7 text-white px-4 text-sm py-1 rounded-2xl"
+            onClick={openEditItemModal}
+          >
+            Edit Dish
+          </button>
+
+          {/* AddItemModal to display the Item form */}
+          <EditDishModal
+            isOpen={isEditModalOpen}
+            onClose={closeEditItemModal}
+            fetchData={fetchData}
+            dishCategories={dishCategories}
+            dishDetails={dishDetails}
+            dish_id={dish_id}
+          />
+        </div>
       </div>
 
       <div className="w-full  mx-auto mt-10">
@@ -143,9 +213,6 @@ const DishDetails = () => {
 };
 
 export default DishDetails;
-
-
-
 
 const Ingredients = ({ ingredients }) => {
   const [selectedOption, setSelectedOption] = useState(null);
@@ -187,7 +254,7 @@ const Ingredients = ({ ingredients }) => {
             <span className="text-center text-gray-800 text-sm">
               Ghc {ingredient.price}
             </span>
-            <span className="text-center text-gray-800 text-xs">{`${ingredient.quantity} ${ingredient.unit}` }</span>
+            <span className="text-center text-gray-800 text-xs">{`${ingredient.quantity} ${ingredient.unit}`}</span>
           </div>
         ))}
       </div>
@@ -195,9 +262,8 @@ const Ingredients = ({ ingredients }) => {
   );
 };
 
-const CustomOptions = ({options}) => {
+const CustomOptions = ({ options }) => {
   const [selectedOption, setSelectedOption] = useState(null);
-
 
   const handleSelection = (id) => {
     setSelectedOption(id === selectedOption ? null : id); // Toggle selection
@@ -219,7 +285,11 @@ const CustomOptions = ({options}) => {
             key={option.custom_option_id}
             onClick={() => handleSelection(option.custom_option_id)}
             className={`flex flex-col items-center w-32 bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition duration-300 
-              ${selectedOption === option.custom_option_id ? 'border-4 border-primary' : ''}`}
+              ${
+                selectedOption === option.custom_option_id
+                  ? 'border-4 border-primary'
+                  : ''
+              }`}
           >
             <img
               src={`${baseUrlMedia}${option.photo}`}
@@ -229,8 +299,10 @@ const CustomOptions = ({options}) => {
             <span className="text-center text-gray-800 font-medium">
               {option.name}
             </span>
-            <span className="text-center text-gray-800 text-sm">Ghc {option.price}</span>
-            <span className="text-center text-gray-800 text-xs">{`${option.quantity} ${option.unit}` }</span>
+            <span className="text-center text-gray-800 text-sm">
+              Ghc {option.price}
+            </span>
+            <span className="text-center text-gray-800 text-xs">{`${option.quantity} ${option.unit}`}</span>
           </div>
         ))}
       </div>
@@ -238,9 +310,7 @@ const CustomOptions = ({options}) => {
   );
 };
 
-const RelatedFoods = ({relatedFoods}) => {
-
-
+const RelatedFoods = ({ relatedFoods }) => {
   return (
     <div className="">
       <div className="flex justify-between">
@@ -279,12 +349,7 @@ const RelatedFoods = ({relatedFoods}) => {
   );
 };
 
-
-
-
-const Chefs = ({chefs}) => {
-
-
+const Chefs = ({ chefs }) => {
   return (
     <div className="">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">Our Chefs</h3>
@@ -298,9 +363,10 @@ const Chefs = ({chefs}) => {
             />
             <div>
               <h4 className="text-md font-semibold text-gray-800">
-              {`${chef.user.first_name} ${chef.user.last_name}`}
+                {`${chef.user.first_name} ${chef.user.last_name}`}
               </h4>
-              <p className="text-sm text-gray-600"></p>{`${chef.kitchen_location}`}
+              <p className="text-sm text-gray-600"></p>
+              {`${chef.kitchen_location}`}
             </div>
           </div>
         ))}
@@ -309,9 +375,7 @@ const Chefs = ({chefs}) => {
   );
 };
 
-
-const Gallery = ({galleryImages}) => {
-
+const Gallery = ({ galleryImages }) => {
   return (
     <div className="">
       <div className="flex justify-between">

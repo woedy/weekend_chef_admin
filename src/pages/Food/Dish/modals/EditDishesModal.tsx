@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { baseUrl, baseUrlMedia, userToken } from '../../../../constants';
 import Alert2 from '../../../UiElements/Alert2';
 
-const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
+const EditDishModal = ({
+  isOpen,
+  onClose,
+  fetchData,
+  dishCategories,
+  dishDetails,
+  dish_id,
+}) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [basePrice, setBasePrice] = useState('');
@@ -21,6 +28,25 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
   const closeAlert = () => {
     setAlert({ message: '', type: '' });
   };
+
+  useEffect(() => {
+    if (dishDetails) {
+      setName(dishDetails.name);
+      setDescription(dishDetails.description);
+      setBasePrice(dishDetails.base_price);
+      setValue(dishDetails.value);
+      setQuantity(dishDetails.quantity);
+
+      // Find the category id that matches the category name in dishDetails
+      const category = dishCategories.find(
+        (category) => category.name === dishDetails.category_name,
+      );
+
+      if (category) {
+        setSelectedCategory(category.id); // Set the id of the category
+      }
+    }
+  }, [dishDetails, dishCategories]); // Added dishCategories as a dependency
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,10 +86,10 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
       errors.category = 'Category is required.';
     }
 
-    if (!photo) {
-      formValid = false;
-      errors.photo = 'Food photo is required.';
-    }
+    // if (!photo) {
+    //   formValid = false;
+    //   errors.photo = 'Food photo is required.';
+    // }
 
     if (!formValid) {
       setInputErrors(errors);
@@ -71,15 +97,18 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
     }
 
     const formData = new FormData();
+    formData.append('dish_id', dish_id);
     formData.append('name', name);
     formData.append('description', description);
     formData.append('base_price', basePrice);
     formData.append('category_id', selectedCategory);
     formData.append('value', value);
     formData.append('quantity', quantity);
-    formData.append('cover_photo', photo);
+    if (photo) {
+      formData.append('cover_photo', photo);
+    }
 
-    const url = baseUrl + 'api/food/add-dish/';
+    const url = baseUrl + 'api/food/edit-dish/';
 
     try {
       setLoading(true);
@@ -163,7 +192,7 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
           }`}
         >
           <div className="w-full max-w-3xl h-full flex flex-col">
-            <h1 className="text-xl font-semibold mb-3">Add Dish</h1>
+            <h1 className="text-xl font-semibold mb-3">Edit Dish</h1>
 
             {/* Scrollable container */}
             <div className="overflow-y-auto h-full flex-1">
@@ -299,6 +328,7 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                     </p>
                   )}
                 </div>
+
 {/* Category */}
 <div className="flex flex-col gap-5 mb-7">
   <label
@@ -389,15 +419,16 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                   )}
 
                   {/* Image Preview */}
-                  {imagePreview && (
-                    <div className="mt-3">
-                      <img
-                        src={imagePreview}
-                        alt="Dish Preview"
-                        className="w-32 h-32 object-cover rounded-lg"
-                      />
-                    </div>
-                  )}
+                  <div className="mt-3">
+                    <img
+                      src={
+                        imagePreview ||
+                        `${baseUrlMedia}${dishDetails.cover_photo}`
+                      } // Default image path
+                      alt="Dish Preview"
+                      className="w-32 h-32 object-cover rounded-lg"
+                    />
+                  </div>
                 </div>
 
                 {/* Server Error */}
@@ -474,13 +505,7 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
                     </button>
                   )}
                 </div>
-
-
-
               </form>
-
-
-              
             </div>
           </div>
         </div>
@@ -489,4 +514,4 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
   );
 };
 
-export default AddDishModal;
+export default EditDishModal;
