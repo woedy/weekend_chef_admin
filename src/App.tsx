@@ -23,6 +23,7 @@ import DishDetails from './pages/Food/Dish/DishDetails';
 import AllCustomOptions from './pages/Food/CustomOptions/AllCustomOptions';
 import ArchivedCustomOptions from './pages/Food/CustomOptions/ArchivedCustomOptions';
 import CustomOptionDetails from './pages/Food/CustomOptions/CustomOptionDetails';
+import IngredientDetails from './pages/Food/Ingredients/IngredientDetails';
 
 const hiddenOnRoutes = ['/', '/signup', '/signin'];
 
@@ -133,8 +134,7 @@ function App() {
           }
         />
 
-
-<Route
+        <Route
           path="/all-custom-options"
           element={
             <>
@@ -144,9 +144,7 @@ function App() {
           }
         />
 
-
-
-<Route
+        <Route
           path="/custom-option-details/:custom_option_id"
           element={
             <>
@@ -156,10 +154,7 @@ function App() {
           }
         />
 
-
-
-
-<Route
+        <Route
           path="/archived-custom-options"
           element={
             <>
@@ -168,6 +163,31 @@ function App() {
             </>
           }
         />
+
+
+
+
+
+
+
+
+
+<Route
+          path="/ingredient-details/:ingredient_id"
+          element={
+            <>
+              <PageTitle title="Ingredient Details | Weekend Chef Admin." />
+              <IngredientDetails />
+            </>
+          }
+        />
+
+
+
+
+
+
+
 
         <Route
           path="/all-users"

@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumbs/Breadcrumb';
 import { baseUrl, baseUrlMedia, userToken } from '../../../constants';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import EditDishModal from './modals/EditDishesModal';
+import AddIngredientModal from './modals/AddIngredientsModal';
+import EditIngredientModal from '../Ingredients/modals/EditIngredientModal';
+import IngredientDetails from '../Ingredients/IngredientDetails';
+import AddDishCustomOptionsModal from './modals/AddDishCustomOptionsModal';
+import AddDishRelationModal from './modals/AddDishRelationModal';
 
 const DishDetails = () => {
   const [search, setSearch] = useState('');
@@ -21,20 +26,15 @@ const DishDetails = () => {
   const [dishCategories, setDishCategories] = useState([]);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddIngredientModalOpen, setIsAddIngredientModalOpen] =
+    useState(false);
+  const [isEditIngredientModalOpen, setIsEditIngredientModalOpen] =
+    useState(false);
 
-  const tabs = [
-    { label: 'Ingredient', content: <Ingredients ingredients={ingredients} /> },
-    {
-      label: 'Custom Options',
-      content: <CustomOptions options={customOptions} />,
-    },
-    {
-      label: 'Related foods',
-      content: <RelatedFoods relatedFoods={relatedFoods} />,
-    },
-    { label: 'Chefs', content: <Chefs chefs={chefs} /> },
-    { label: 'Gallery', content: <Gallery galleryImages={galleryImages} /> },
-  ];
+  const [isAddCustomOptionModalOpen, setIsAddCustomOptionModalOpen] =
+    useState(false);
+  const [isAddRelatedFoodModalOpen, setIsAddRelatedFoodModalOpen] =
+    useState(false);
 
   const item = {
     title: 'Cheese Burger',
@@ -51,6 +51,38 @@ const DishDetails = () => {
 
   const closeEditItemModal = () => {
     setIsEditModalOpen(false);
+  };
+
+  const openAddIngredientModal = () => {
+    setIsAddIngredientModalOpen(true);
+  };
+
+  const closeAddIngredientModal = () => {
+    setIsAddIngredientModalOpen(false);
+  };
+
+  const openEditIngredientModal = () => {
+    setIsEditIngredientModalOpen(true);
+  };
+
+  const closeEditIngredientModal = () => {
+    setIsEditIngredientModalOpen(false);
+  };
+
+  const openAddCustomOptionModal = () => {
+    setIsAddCustomOptionModalOpen(true);
+  };
+
+  const closeAddCustomOptionModal = () => {
+    setIsAddCustomOptionModalOpen(false);
+  };
+
+  const openAddRelatedFoodModal = () => {
+    setIsAddRelatedFoodModalOpen(true);
+  };
+
+  const closeAddRelatedFoodModal = () => {
+    setIsAddRelatedFoodModalOpen(false);
   };
 
   const fetchData = useCallback(async () => {
@@ -84,6 +116,45 @@ const DishDetails = () => {
       setLoading(false);
     }
   }, [baseUrl, dish_id, userToken]);
+
+  const tabs = [
+    {
+      label: 'Ingredient',
+      content: (
+        <Ingredients
+          ingredients={ingredients}
+          openAddIngredientModal={openAddIngredientModal}
+          closeAddIngredientModal={closeAddIngredientModal}
+          dish_id={dish_id}
+          openEditIngredientModal={openEditIngredientModal}
+          isEditIngredientModalOpen={isEditIngredientModalOpen}
+          closeEditIngredientModal={closeEditIngredientModal}
+          fetchData={fetchData}
+        />
+      ),
+    },
+    {
+      label: 'Custom Options',
+      content: (
+        <CustomOptions
+          options={customOptions}
+          openAddCustomOptionModal={openAddCustomOptionModal}
+          closeAddCustomOptionModal={closeAddCustomOptionModal}
+        />
+      ),
+    },
+    {
+      label: 'Related foods',
+      content: (
+        <RelatedFoods
+          relatedFoods={relatedFoods}
+          openAddRelatedFoodModal={openAddRelatedFoodModal}
+        />
+      ),
+    },
+    { label: 'Chefs', content: <Chefs chefs={chefs} /> },
+    { label: 'Gallery', content: <Gallery galleryImages={galleryImages} /> },
+  ];
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -182,6 +253,28 @@ const DishDetails = () => {
             dishDetails={dishDetails}
             dish_id={dish_id}
           />
+
+          {/* AddItemModal to display the Item form */}
+          <AddIngredientModal
+            isOpen={isAddIngredientModalOpen}
+            onClose={closeAddIngredientModal}
+            fetchData={fetchData}
+            dish_id={dish_id}
+          />
+
+          <AddDishCustomOptionsModal
+            isOpen={isAddCustomOptionModalOpen}
+            onClose={closeAddCustomOptionModal}
+            fetchData={fetchData}
+            dish_id={dish_id}
+          />
+
+          <AddDishRelationModal
+            isOpen={isAddRelatedFoodModalOpen}
+            onClose={closeAddRelatedFoodModal}
+            fetchData={fetchData}
+            dish_id={dish_id}
+          />
         </div>
       </div>
 
@@ -214,11 +307,26 @@ const DishDetails = () => {
 
 export default DishDetails;
 
-const Ingredients = ({ ingredients }) => {
+const Ingredients = ({
+  ingredients,
+  openAddIngredientModal,
+  dish_id,
+  openEditIngredientModal,
+  isEditIngredientModalOpen,
+  closeEditIngredientModal,
+  closeAddIngredientModal,
+  fetchData,
+}) => {
   const [selectedOption, setSelectedOption] = useState(null);
+  const [selectedIngredientId, setSelectedIngredientId] = useState(null); // State to store the selected ingredient ID
 
   const handleSelection = (id) => {
     setSelectedOption(id === selectedOption ? null : id); // Toggle selection
+  };
+
+  const openEditIngredient = (id) => {
+    setSelectedIngredientId(id); // Update the selected ingredient ID
+    openEditIngredientModal(id); // Trigger modal with the selected ID
   };
 
   return (
@@ -227,7 +335,10 @@ const Ingredients = ({ ingredients }) => {
         <h3 className="text-xl font-semibold text-gray-800 mb-4">
           Ingredients
         </h3>
-        <button className="bg-primary h-7 text-white px-4 text-sm py-1 rounded-xl">
+        <button
+          className="bg-primary h-7 text-white px-4 text-sm py-1 rounded-xl"
+          onClick={openAddIngredientModal}
+        >
           Add Ingredient
         </button>
       </div>
@@ -235,26 +346,67 @@ const Ingredients = ({ ingredients }) => {
         {ingredients.map((ingredient) => (
           <div
             key={ingredient.ingredient_id}
-            onClick={() => handleSelection(ingredient.id)}
-            className={`flex flex-col items-center w-32 bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition duration-300 
-              ${
-                selectedOption === ingredient.ingredient_id
-                  ? 'border-4 border-primary'
-                  : ''
-              }`}
+            onClick={() => handleSelection(ingredient.ingredient_id)}
+            className={`relative flex flex-col items-center w-32 bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition duration-300 
+            ${
+              selectedOption === ingredient.ingredient_id
+                ? 'border-4 border-primary'
+                : ''
+            }`}
           >
-            <img
-              src={`${baseUrlMedia}${ingredient.photo}`}
-              alt={ingredient.name}
-              className="w-20 h-20 object-cover rounded-full mb-2"
+            {/* Edit Icon - SVG */}
+            <div
+              className="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-primary transition duration-200"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent click from propagating to parent div
+                openEditIngredient(ingredient.ingredient_id); // Pass ingredient ID to modal
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M13.828 3.172a4 4 0 015.656 5.656L6 17.828V20h2.172l9.484-9.484a4 4 0 00-5.656-5.656L10.828 6 3 13.828V20h6.172L18 12.828z"
+                />
+              </svg>
+            </div>
+
+            {/* EditItemModal to display the Item form */}
+            <EditIngredientModal
+              isOpen={isEditIngredientModalOpen}
+              onClose={closeEditIngredientModal}
+              fetchData={fetchData}
+              ingredient_id={selectedIngredientId} // Pass the selected ID to the modal
+              dish_id={dish_id}
             />
-            <span className="text-center text-gray-800 font-medium">
-              {ingredient.name}
-            </span>
-            <span className="text-center text-gray-800 text-sm">
-              Ghc {ingredient.price}
-            </span>
-            <span className="text-center text-gray-800 text-xs">{`${ingredient.quantity} ${ingredient.unit}`}</span>
+
+            {/* Ingredient Details */}
+            <Link
+              className="flex flex-col items-center justify-center space-y-2"
+              to={'/ingredient-details/' + ingredient.ingredient_id}
+            >
+              <img
+                src={`${baseUrlMedia}${ingredient.photo}`}
+                alt={ingredient.name}
+                className="w-20 h-20 object-cover rounded-full"
+              />
+              <div className="text-center">
+                <span className="block text-gray-800 font-medium">
+                  {ingredient.name}
+                </span>
+                <span className="block text-gray-800 text-sm">
+                  Ghc {ingredient.price}
+                </span>
+                <span className="block text-gray-800 text-xs">{`${ingredient.quantity} ${ingredient.unit}`}</span>
+              </div>
+            </Link>
           </div>
         ))}
       </div>
@@ -262,7 +414,11 @@ const Ingredients = ({ ingredients }) => {
   );
 };
 
-const CustomOptions = ({ options }) => {
+const CustomOptions = ({
+  options,
+  openAddCustomOptionModal,
+  closeAddCustomOptionModal,
+}) => {
   const [selectedOption, setSelectedOption] = useState(null);
 
   const handleSelection = (id) => {
@@ -275,7 +431,10 @@ const CustomOptions = ({ options }) => {
         <h3 className="text-xl font-semibold text-gray-800 mb-4">
           Custom Options
         </h3>
-        <button className="bg-primary h-7 text-white px-4 text-sm py-1 rounded-xl">
+        <button
+          className="bg-primary h-7 text-white px-4 text-sm py-1 rounded-xl"
+          onClick={openAddCustomOptionModal}
+        >
           Add Custom Option
         </button>
       </div>
@@ -310,21 +469,24 @@ const CustomOptions = ({ options }) => {
   );
 };
 
-const RelatedFoods = ({ relatedFoods }) => {
+const RelatedFoods = ({ relatedFoods, openAddRelatedFoodModal }) => {
   return (
     <div className="">
       <div className="flex justify-between">
         <h3 className="text-xl font-semibold text-gray-800 mb-4">
           Related Foods
         </h3>
-        <button className="bg-primary h-7 text-white px-4 text-sm py-1 rounded-xl">
-          Add related food
+        <button
+          className="bg-primary h-7 text-white px-4 text-sm py-1 rounded-xl"
+          onClick={openAddRelatedFoodModal}
+        >
+          Add Related food
         </button>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         {relatedFoods.map((food) => (
           <div
-            key={food.id}
+            key={food.dish_id}
             className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300"
           >
             <img

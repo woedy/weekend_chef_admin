@@ -148,12 +148,21 @@ const AddDishModal = ({ isOpen, onClose, fetchData, dishCategories }) => {
     setSelectedCategory(event.target.value);
   };
 
+    // Handle close when clicking outside the modal
+    const handleBackdropClick = (e) => {
+      if (e.target === e.currentTarget) {
+        onClose(); // Close modal when backdrop is clicked
+      }
+    };
   return (
     isOpen && (
       <div
         className={`fixed inset-0 flex items-center justify-end z-999 bg-black bg-opacity-50 transition-opacity duration-300 ease-in ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
+      
+        onClick={handleBackdropClick}
+
       >
         <div
           className={`bg-white rounded-lg p-6 shadow-lg max-w-3xl w-full h-full flex justify-center overflow-auto transition-all duration-500 ease-in-out transform ${

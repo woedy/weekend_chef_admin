@@ -3,50 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import { baseUrl, baseUrlMedia, userToken } from '../../../../constants';
 import Alert2 from '../../../UiElements/Alert2';
 
-const EditDishModal = ({
+const AddIngredientModal = ({
   isOpen,
   onClose,
   fetchData,
-  dishCategories,
-  dishDetails,
   dish_id,
+
+
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [basePrice, setBasePrice] = useState('');
+  const [price, setPrice] = useState('');
   const [photo, setPhoto] = useState(null);
   const [value, setValue] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [unit, setUnit] = useState('');
   const [inputErrors, setInputErrors] = useState({});
   const [serverError, setServerError] = useState({});
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ message: '', type: '' });
   const [selectedCategory, setSelectedCategory] = useState(''); // Store the selected category id
 
-  const navigate = useNavigate();
 
-  const closeAlert = () => {
-    setAlert({ message: '', type: '' });
+  const handleSelectChange = (event) => {
+    setSelectedCategory(event.target.value);
   };
 
-  useEffect(() => {
-    if (dishDetails) {
-      setName(dishDetails.name);
-      setDescription(dishDetails.description);
-      setBasePrice(dishDetails.base_price);
-      setValue(dishDetails.value);
-      setQuantity(dishDetails.quantity);
 
-      // Find the category id that matches the category name in dishDetails
-      const category = dishCategories.find(
-        (category) => category.name === dishDetails.category_name,
-      );
-
-      if (category) {
-        setSelectedCategory(category.id); // Set the id of the category
-      }
-    }
-  }, [dishDetails, dishCategories]); // Added dishCategories as a dependency
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,7 +43,7 @@ const EditDishModal = ({
     // Input validation
     if (name === '') {
       formValid = false;
-      errors.name = 'Dish name is required.';
+      errors.name = 'Name is required.';
     }
 
     if (description === '') {
@@ -68,9 +51,9 @@ const EditDishModal = ({
       errors.description = 'Description is required.';
     }
 
-    if (basePrice === '') {
+    if (price === '') {
       formValid = false;
-      errors.basePrice = 'Base price is required.';
+      errors.price = 'Price is required.';
     }
     if (value === '') {
       formValid = false;
@@ -80,16 +63,20 @@ const EditDishModal = ({
       formValid = false;
       errors.quantity = 'Quantity is required.';
     }
+    if (unit === '') {
+      formValid = false;
+      errors.unit = 'Unit is required.';
+    }
 
     if (selectedCategory === '') {
       formValid = false;
-      errors.category = 'Category is required.';
+      errors.selectedCategory = 'Category is required.';
     }
 
-    // if (!photo) {
-    //   formValid = false;
-    //   errors.photo = 'Food photo is required.';
-    // }
+    if (!photo) {
+      formValid = false;
+      errors.photo = 'Photo is required.';
+    }
 
     if (!formValid) {
       setInputErrors(errors);
@@ -100,15 +87,16 @@ const EditDishModal = ({
     formData.append('dish_id', dish_id);
     formData.append('name', name);
     formData.append('description', description);
-    formData.append('base_price', basePrice);
-    formData.append('category_id', selectedCategory);
+    formData.append('price', price);
+    formData.append('category', selectedCategory);
     formData.append('value', value);
+    formData.append('unit', unit);
     formData.append('quantity', quantity);
     if (photo) {
-      formData.append('cover_photo', photo);
+      formData.append('photo', photo);
     }
 
-    const url = baseUrl + 'api/food/edit-dish/';
+    const url = baseUrl + 'api/food/add-ingredient/';
 
     try {
       setLoading(true);
@@ -129,19 +117,19 @@ const EditDishModal = ({
 
       if (!response.ok) {
         setServerError(data);
-        throw new Error(data.message || 'Failed to add dish');
+        throw new Error(data.message || 'Failed to add ingredeint');
       }
 
-      console.log('Dish added successfully');
+      console.log('ingredient added successfully');
 
-      // Close the modal and navigate to the All Dish Categories page
       onClose(); // Close the modal
       fetchData();
       setName('');
       setDescription('');
-      setBasePrice('');
+      setPrice('');
       setValue('');
       setQuantity('');
+      setUnit('');
       setPhoto(null);
 
       setAlert({ message: 'Item added successfully', type: 'success' });
@@ -156,7 +144,7 @@ const EditDishModal = ({
           message: 'An error occurred while adding the item',
           type: 'error',
         });
-        console.error('Error adding dish:', error);
+        console.error('Error adding ingredient:', error);
       }
     } finally {
       setLoading(false);
@@ -173,12 +161,6 @@ const EditDishModal = ({
 
   const imagePreview = photo ? URL.createObjectURL(photo) : null;
 
-  const handleCategoryChange = (event) => {
-    setSelectedCategory(event.target.value);
-  };
-
-
-    
   // Handle close when clicking outside the modal
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -192,10 +174,9 @@ const EditDishModal = ({
         className={`fixed inset-0 flex items-center justify-end z-999 bg-black bg-opacity-50 transition-opacity duration-300 ease-in ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-     
-     
         onClick={handleBackdropClick}
->
+      
+      >
         <div
           className={`bg-white rounded-lg p-6 shadow-lg max-w-3xl w-full h-full flex justify-center overflow-auto transition-all duration-500 ease-in-out transform ${
             isOpen
@@ -204,7 +185,7 @@ const EditDishModal = ({
           }`}
         >
           <div className="w-full max-w-3xl h-full flex flex-col">
-            <h1 className="text-xl font-semibold mb-3">Edit Dish</h1>
+            <h1 className="text-xl font-semibold mb-3">Add Ingredient</h1>
 
             {/* Scrollable container */}
             <div className="overflow-y-auto h-full flex-1">
@@ -215,7 +196,7 @@ const EditDishModal = ({
                     className="mb-3 block text-sm font-medium text-black dark:text-white"
                     htmlFor="name"
                   >
-                    Dish Name
+                    Name
                   </label>
                   <input
                     className={`w-full rounded border ${
@@ -226,7 +207,7 @@ const EditDishModal = ({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Soups"
+                    placeholder="Palm Oil"
                   />
                   {inputErrors.name && (
                     <p className="text-red-500 text-sm mt-1">
@@ -254,11 +235,41 @@ const EditDishModal = ({
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={4}
-                    placeholder="Dish description"
+                    placeholder="Description"
                   ></textarea>
                   {inputErrors.description && (
                     <p className="text-red-500 text-sm mt-1">
                       {inputErrors.description}
+                    </p>
+                  )}
+                </div>
+
+
+                <div className="mb-5.5">
+                  <label
+                    className="mb-3 block text-sm font-medium text-black dark:text-white"
+                    htmlFor="category"
+                  >
+                    Option Type
+                  </label>
+                  <select
+                    id="selectedCategory"
+                    name="selectedCategory"
+                    value={selectedCategory}
+                    onChange={handleSelectChange}
+                    className={`w-full rounded border ${
+                      inputErrors.selectedCategory ? 'border-red-500' : 'border-stroke'
+                    } bg-gray py-3 pl-5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary`}
+                  >
+                    <option value="" disabled>
+                      Select a category...
+                    </option>
+                    <option value="Solid">Solid</option>
+                    <option value="Liquid">Liquid</option>
+                  </select>
+                  {inputErrors.selectedCategory && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {inputErrors.selectedCategory}
                     </p>
                   )}
                 </div>
@@ -315,94 +326,58 @@ const EditDishModal = ({
                   )}
                 </div>
 
-                {/* Base price */}
+                {/*Price */}
                 <div className="mb-5.5">
                   <label
                     className="mb-3 block text-sm font-medium text-black dark:text-white"
                     htmlFor="baseprice"
                   >
-                    Base price (Ghc)
+                    Price (Ghc)
                   </label>
                   <input
                     className={`w-full rounded border ${
-                      inputErrors.basePrice ? 'border-red-500' : 'border-stroke'
+                      inputErrors.price ? 'border-red-500' : 'border-stroke'
                     } bg-gray py-3 pl-5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary`}
-                    id="basePrice"
-                    name="basePrice"
+                    id="price"
+                    name="price"
                     type="text"
-                    value={basePrice}
-                    onChange={(e) => setBasePrice(e.target.value)}
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
                     placeholder="20"
                   />
-                  {inputErrors.basePrice && (
+                  {inputErrors.price && (
                     <p className="text-red-500 text-sm mt-1">
-                      {inputErrors.basePrice}
+                      {inputErrors.price}
                     </p>
                   )}
                 </div>
 
-{/* Category */}
-<div className="flex flex-col gap-5 mb-7">
-  <label
-    className="block text-sm font-medium text-black dark:text-white"
-    htmlFor="category"
-  >
-    Category
-  </label>
+          {/* Unit */}
+          <div className="mb-5.5">
+                  <label
+                    className="mb-3 block text-sm font-medium text-black dark:text-white"
+                    htmlFor="quantity"
+                  >
+                    Unit
+                  </label>
+                  <input
+                    className={`w-full rounded border ${
+                      inputErrors.unit ? 'border-red-500' : 'border-stroke'
+                    } bg-gray py-3 pl-5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary`}
+                    id="unit"
+                    name="unit"
+                    type="text"
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    placeholder="kg"
+                  />
+                  {inputErrors.unit && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {inputErrors.unit}
+                    </p>
+                  )}
+                </div>
 
-  {loading ? (
-    <div>Loading...</div>
-  ) : (
-    <div className="relative z-20 bg-white dark:bg-form-input">
-      {/* Select Dropdown Wrapper */}
-      <select
-        id="category"
-        name="category"
-        value={selectedCategory}
-        onChange={handleCategoryChange}
-        className={`w-full appearance-none rounded border ${
-          inputErrors.category ? 'border-red-500' : 'border-stroke'
-        } bg-gray py-3 pl-5 pr-10 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary`}
-      >
-        <option value="" disabled className="text-body dark:text-bodydark">
-          Select a Category
-        </option>
-        {dishCategories.map((category) => (
-          <option
-            key={category.id}
-            value={category.id}
-            className="text-body dark:text-bodydark"
-          >
-            {category.name}
-          </option>
-        ))}
-      </select>
-
-      {/* Dropdown Icon */}
-      <svg
-        className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-white pointer-events-none"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M19 9l-7 7-7-7"
-        />
-      </svg>
-
-      {/* Error message */}
-      {inputErrors.category && (
-        <p className="text-red-500 text-sm mt-1">
-          {inputErrors.category}
-        </p>
-      )}
-    </div>
-  )}
-</div>
 
 
 
@@ -412,7 +387,7 @@ const EditDishModal = ({
                     className="mb-3 block text-sm font-medium text-black dark:text-white"
                     htmlFor="photo"
                   >
-                    Dish Photo
+                  Photo
                   </label>
                   <input
                     className={`w-full rounded border ${
@@ -430,17 +405,19 @@ const EditDishModal = ({
                     </p>
                   )}
 
-                  {/* Image Preview */}
-                  <div className="mt-3">
-                    <img
-                      src={
-                        imagePreview ||
-                        `${baseUrlMedia}${dishDetails.cover_photo}`
-                      } // Default image path
-                      alt="Dish Preview"
-                      className="w-32 h-32 object-cover rounded-lg"
-                    />
-                  </div>
+
+
+                          {/* Image Preview */}
+                          {imagePreview && (
+                    <div className="mt-3">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-32 h-32 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+
                 </div>
 
                 {/* Server Error */}
@@ -526,4 +503,4 @@ const EditDishModal = ({
   );
 };
 
-export default EditDishModal;
+export default AddIngredientModal;
