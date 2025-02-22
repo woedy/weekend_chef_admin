@@ -1,15 +1,21 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import Breadcrumb from '../../../components/Breadcrumbs/Breadcrumb';
 import { baseUrl, baseUrlMedia, userToken } from '../../../constants';
 import { Link, useParams } from 'react-router-dom';
 import EditDishModal from './modals/EditDishesModal';
 import AddIngredientModal from './modals/AddIngredientsModal';
 import EditIngredientModal from '../Ingredients/modals/EditIngredientModal';
-import IngredientDetails from '../Ingredients/IngredientDetails';
 import AddDishCustomOptionsModal from './modals/AddDishCustomOptionsModal';
 import AddDishRelationModal from './modals/AddDishRelationModal';
+import MapGL, { Marker } from 'react-map-gl';
+
+
+
+
 
 const DishDetails = () => {
+  const mapRef = useRef(null);
+
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
@@ -35,6 +41,14 @@ const DishDetails = () => {
     useState(false);
   const [isAddRelatedFoodModalOpen, setIsAddRelatedFoodModalOpen] =
     useState(false);
+
+
+    // Sample data: List of chef kitchen locations
+    const kitchenLocations = [
+      { id: 1, name: 'Chef Kitchen 1', latitude: 8.6, longitude: -3.9 },
+      { id: 2, name: 'Chef Kitchen 2', latitude: 8.8, longitude: -4.0 },
+      { id: 3, name: 'Chef Kitchen 3', latitude: 8.7, longitude: -3.8 },
+    ];
 
   const item = {
     title: 'Cheese Burger',
@@ -195,57 +209,94 @@ const DishDetails = () => {
   return (
     <div>
       <Breadcrumb pageName="Dish / Details" />
+  
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-6">
+  {/* Dish Details */}
+  <div className="col-span-1 md:col-span-2 rounded-lg border border-stroke shadow-lg dark:border-strokedark dark:bg-boxdark">
+    <div className="flex flex-col md:flex-row gap-8 items-start p-6">
+      {/* Item Image */}
+      <div className="flex-2 w-full md:w-1/3">
+        <img
+          src={
+            dishDetails.cover_photo
+              ? `${baseUrlMedia}${dishDetails.cover_photo}`
+              : item.image
+          }
+          alt={item.title}
+          className="w-full h-80 rounded-lg shadow-lg object-cover"
+        />
+      </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <div className="col-span-2 rounded-sm border border-stroke  shadow-default dark:border-strokedark dark:bg-boxdark">
-          <div className="container mx-auto">
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-              {/* Item Image */}
-              <div className="flex-2">
-                <img
-                  src={
-                    dishDetails.cover_photo
-                      ? `${baseUrlMedia}${dishDetails.cover_photo}`
-                      : item.image
-                  }
-                  alt={item.title}
-                  className="w-100 h-100 rounded-lg shadow-lg object-cover"
-                />
-              </div>
-
-              {/* Item Details */}
-              <div className="flex-1 space-y-4">
-                <h2 className="text-3xl mt-5 font-semibold text-gray-800">
-                  {dishDetails.name}
-                </h2>
-                <p className="text-gray-600">
-                  <span className="font-bold">ID: </span>
-                  {dishDetails.dish_id}
-                </p>
-                <p className="text-gray-600">{dishDetails.description}</p>
-                <div className="flex items-center gap-4">
-                  <p className="text-xl font-bold text-gray-800">{`Ghc ${dishDetails.base_price}`}</p>
-                  <div className="text-sm text-white bg-primary inline-block px-4 py-1 rounded-full">
-                    {dishDetails.category_name}
-                  </div>
-                </div>
-
-                <p className="text-gray-600 ">{dishDetails.value}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-span-1 rounded-sm border border-stroke  shadow-default dark:border-strokedark dark:bg-boxdark">
+      {/* Item Details */}
+      <div className="flex-1 space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-semibold text-gray-800">
+            {dishDetails.name}
+          </h2>
+          {/* Edit Dish Button */}
           <button
-            className="bg-primary m-5  h-7 text-white px-4 text-sm py-1 rounded-2xl"
             onClick={openEditItemModal}
+            className="text-primary h-[30px] font-semibold bg-transparent border border-primary text-sm px-4 rounded-md hover:bg-primary hover:text-white transition"
           >
             Edit Dish
           </button>
+        </div>
 
-          {/* AddItemModal to display the Item form */}
-          <EditDishModal
+        <p className="text-gray-600">
+          <span className="font-bold">ID: </span>
+          {dishDetails.dish_id}
+        </p>
+        <p className="text-gray-600">{dishDetails.description}</p>
+        <div className="flex items-center gap-4">
+          <p className="text-xl font-bold text-gray-800">{`Ghc ${dishDetails.base_price}`}</p>
+          <div className="text-sm text-white bg-primary inline-block px-4 py-1 rounded-full">
+            {dishDetails.category_name}
+          </div>
+        </div>
+
+        <p className="text-gray-600">{dishDetails.value}</p>
+      </div>
+    </div>
+  </div>
+
+  {/* Map */}
+  <div className="col-span-1 rounded-lg border border-stroke shadow-lg dark:border-strokedark dark:bg-boxdark overflow-hidden"> {/* Added overflow-hidden */}
+    {/* Ensure the container takes up the full height and width */}
+    <div className="w-full h-[400px]"> {/* Set a specific height to prevent overflow */}
+      <MapGL
+        ref={mapRef}
+        mapboxAccessToken="pk.eyJ1IjoiZGVsYWRlbS1waW5nc2hpcCIsImEiOiJjbTVwNGtuYnowcjUzMmlzOHYxcXd5YWkxIn0.nKSC4i5LZk2_QT0xh-WQSg"
+        initialViewState={{
+          longitude: -3.9,
+          latitude: 8.6,
+          zoom: 6,
+        }}
+        style={{ width: '100%', height: '100%' }}
+        mapStyle="mapbox://styles/deladem-pingship/cluv4uiay004y01p5b7es8xp0"
+      >
+        {/* Render a Marker for each kitchen location */}
+        {kitchenLocations.map((location) => (
+          <Marker
+            key={location.id}
+            latitude={location.latitude}
+            longitude={location.longitude}
+          >
+            <button
+              onClick={() => handleMarkerClick(location)}
+              className="bg-blue-500 text-white p-2 rounded-full shadow-md"
+              title={`Click to view ${location.name}`}
+            >
+              <span>🍴</span> {/* You can use an icon here */}
+            </button>
+          </Marker>
+        ))}
+      </MapGL>
+    </div>
+  </div>
+</div>
+
+
+      <EditDishModal
             isOpen={isEditModalOpen}
             onClose={closeEditItemModal}
             fetchData={fetchData}
@@ -253,32 +304,30 @@ const DishDetails = () => {
             dishDetails={dishDetails}
             dish_id={dish_id}
           />
-
-          {/* AddItemModal to display the Item form */}
-          <AddIngredientModal
-            isOpen={isAddIngredientModalOpen}
-            onClose={closeAddIngredientModal}
-            fetchData={fetchData}
-            dish_id={dish_id}
-          />
-
-          <AddDishCustomOptionsModal
-            isOpen={isAddCustomOptionModalOpen}
-            onClose={closeAddCustomOptionModal}
-            fetchData={fetchData}
-            dish_id={dish_id}
-          />
-
-          <AddDishRelationModal
-            isOpen={isAddRelatedFoodModalOpen}
-            onClose={closeAddRelatedFoodModal}
-            fetchData={fetchData}
-            dish_id={dish_id}
-          />
-        </div>
-      </div>
-
-      <div className="w-full  mx-auto mt-10">
+  
+      {/* AddItemModal to display the Item form */}
+      <AddIngredientModal
+        isOpen={isAddIngredientModalOpen}
+        onClose={closeAddIngredientModal}
+        fetchData={fetchData}
+        dish_id={dish_id}
+      />
+  
+      <AddDishCustomOptionsModal
+        isOpen={isAddCustomOptionModalOpen}
+        onClose={closeAddCustomOptionModal}
+        fetchData={fetchData}
+        dish_id={dish_id}
+      />
+  
+      <AddDishRelationModal
+        isOpen={isAddRelatedFoodModalOpen}
+        onClose={closeAddRelatedFoodModal}
+        fetchData={fetchData}
+        dish_id={dish_id}
+      />
+  
+      <div className="w-full mx-auto mt-10">
         {/* Tab buttons */}
         <div className="flex space-x-4 border-b border-gray-100">
           {tabs.map((tab, index) => (
@@ -295,7 +344,7 @@ const DishDetails = () => {
             </button>
           ))}
         </div>
-
+  
         {/* Tab content */}
         <div className="p-4 bg-gray-100 mt-1 rounded-md">
           {tabs[activeTab].content}
@@ -303,6 +352,7 @@ const DishDetails = () => {
       </div>
     </div>
   );
+  
 };
 
 export default DishDetails;

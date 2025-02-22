@@ -24,6 +24,7 @@ import AllCustomOptions from './pages/Food/CustomOptions/AllCustomOptions';
 import ArchivedCustomOptions from './pages/Food/CustomOptions/ArchivedCustomOptions';
 import CustomOptionDetails from './pages/Food/CustomOptions/CustomOptionDetails';
 import IngredientDetails from './pages/Food/Ingredients/IngredientDetails';
+import MapView from './pages/Food/Dish/MapView';
 
 const hiddenOnRoutes = ['/', '/signup', '/signin'];
 
@@ -178,6 +179,17 @@ function App() {
             <>
               <PageTitle title="Ingredient Details | Weekend Chef Admin." />
               <IngredientDetails />
+            </>
+          }
+        />
+
+
+<Route
+          path="/map-view/"
+          element={
+            <>
+              <PageTitle title="MapView | Weekend Chef Admin." />
+              <MapView />
             </>
           }
         />
